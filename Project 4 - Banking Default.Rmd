@@ -1,0 +1,1114 @@
+---
+title: "Banking Default"
+author: "Samer Alzaim"
+date: " "
+output:
+  html_document: 
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: yes
+    theme: lumen
+  word_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    keep_md: yes
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+    fig_width: 3
+    fig_height: 3
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{=html}
+
+<style type="text/css">
+
+/* Cascading Style Sheets (CSS) is a stylesheet language used to describe the presentation of a document written in HTML or XML. it is a simple mechanism for adding style (e.g., fonts, colors, spacing) to Web documents. */
+
+h1.title {  /* Title - font specifications of the report title */
+  font-size: 24px;
+  font-weight: bold;
+  color: navy;
+  text-align: center;
+  font-family: "Gill Sans", sans-serif;
+}
+h4.author { /* Header 4 - font specifications for authors  */
+  font-size: 18px;
+  font-family: system-ui;
+  color: navy;
+  text-align: center;
+  font-weight: bold;
+}
+h4.date { /* Header 4 - font specifications for the date  */
+  font-size: 18px;
+  font-family: system-ui;
+  color: DarkBlue;
+  text-align: center;
+  font-weight: bold;
+}
+h1 { /* Header 1 - font specifications for level 1 section title  */
+    font-size: 22px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: center;
+    font-weight: bold;
+}
+h2 { /* Header 2 - font specifications for level 2 section title */
+    font-size: 20px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+    font-weight: bold;
+}
+
+h3 { /* Header 3 - font specifications of level 3 section title  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - font specifications of level 4 section title  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+body { background-color:white; }
+
+.highlightme { background-color:yellow; }
+
+p { background-color:white; }
+
+</style>
+```
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("tidyverse")) {
+   install.packages("tidyverse")
+library(tidyverse)
+}
+if (!require("GGally")) {
+   install.packages("GGally")
+library(GGally)
+}
+if (!require("glmnet")) {
+   install.packages("glmnet")
+library(glmnet)
+}
+if (!require("caret")) {
+   install.packages("caret")
+library(caret)
+}
+if (!require("MASS")) {
+   install.packages("MASS")
+library(MASS)
+}
+if (!require("mlbench")) {
+   install.packages("mlbench")
+library(mlbench)
+}
+if (!require("pROC")) {
+   install.packages("pROC")
+library(pROC)
+}
+if (!require("plotly")) {
+   install.packages("plotly")
+library(plotly)
+}
+if (!require("pander")) {
+   install.packages("pander")
+library(pander)
+}
+if (!require("randomForest")) {
+   install.packages("randomForest")
+library(randomForest)
+}
+
+if (!require("ipred")) {
+   install.packages("ipred")
+library(ipred)
+}
+
+if (!require("rpart")) {
+   install.packages("rpart")
+library(rpart)
+}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+if (!require("rpart.plot")) {
+   install.packages("rpart.plot")
+library(rpart.plot)
+}
+
+if (!require("dplyr")) {
+   install.packages("dplyr")
+library(dplyr)
+}
+
+if (!require("neuralnet")) {
+   install.packages("neuralnet")
+library(neuralnet)
+}
+if (!require("neuralnet")) {
+   install.packages("neuralnet")
+library(neuralnet)
+}
+if (!require("NeuralNetTools")) {
+   install.packages("NeuralNetTools")
+library(NeuralNetTools)
+}
+### 
+knitr::opts_chunk$set(echo = TRUE,       
+                      warning = FALSE,    
+                      results = TRUE,    
+                      message = FALSE,
+                      comment = NA
+                      )  
+```
+
+
+
+```{r}
+ldd <- read.csv("https://raw.githubusercontent.com/sameralzaim/W02/refs/heads/main/BankLoanDefaultDataset.csv")
+
+```
+# Introduction
+  + *Loan Default Data* - aim at analyzing loan default trends and attributes in order to enhance future loans underwriting.
+  + *Data Collection Process* - Process of generating the data is unknown,however, it is most likely collected from lending company nor from credit bureau.
+    
+## Description of Data
+
+  + *Data Structure* - dataset contains 1000 observations with 16 categorical and numerical variables. 
+  
+## Itemized List of Feature Variables
+  
+```{r, echo=FALSE}
+
+#str(ldd)
+
+```
+| **Variable**     | **Description**          |**Class** |
+|:-----------------|:-------------------------|:---------|
+| Default           | Shows if account in good standing  | Cat      |
+| Checking_amount   | Checking amount                    | chr      |
+| Term              | Loan Term                          | num      |
+| Credit_score      | Customer Credit Score              | num      |
+| Gender            | Customer Gender                    | cat      |
+| Marital_status    | Customer Marital Status            | cat      |
+| Car_loan          | Car loan (1 yes, 0 No)             | cat      |
+| Personal_loan     | Personal loan (1 yes, 0 No)        | cat      |
+| Home_loan         | Home loan (1 yes, 0 No)            | cat      |
+| Education_loan    | student loan (1 yes, 0 No)         | cat      |
+| Emp_status        | Employment status (1 employed,0 Not| cat      |
+| Amount            | Amount                             | num      |
+| Saving_amount     | Saving Amount                      | num      |
+| Emp_duration      | Number of years employed           | num      |
+| Age               | Customer Age                       | num      |
+| No_of_credit_acc  | No. of loans the custom have       | num      |
+
+
+    
+
+  
+## Purposes of Using This Data Set
+
+  + Look into visual presentation of data to provide better understand of it and highlight insights into the outcome that can be driven from the data.
+  
+ <font color = "red">**\color{red}Problem Statements**:*</font>  *  <font color = "blue">\color{blue}Report aim to analyse Loan Default Dataset to estimate the probaility of an accounts going into default using other variables as predictor and henc enhance loans underwriting.</font>
+
+## Missing Data
+
+No Missing data in the datset.
+
+```{r}
+# sum (is.na(data))
+
+# colSums(is.na(ldd))
+```
+
+## Accounts Distribution
+
+The report aim to look at the accounts distribution by different demographic in order to identify outliers and asses the impact and correlation between demographic characteristics and probability of account going into default.
+
+
+
+```{r}
+
+library(gridExtra)
+
+layout(matrix(1:8, nrow = 2), widths = c(1, 1, 1,1))
+
+# Create a frequency table Gender
+default_plot <- ggplot(ldd, aes(x = Default, fill = Default)) +
+  geom_bar(fill = "skyblue") +
+  labs(title = "Distribution by Default", x = "Default", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+
+gender_plot <- ggplot(ldd, aes(x = Gender, fill = Gender)) +
+  geom_bar(fill = "skyblue") +
+  labs(title = "Distribution by Gender", x = "Gender", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+
+emp_status_plot <- ggplot(ldd, aes(x = Emp_status, fill = Emp_status)) +
+  geom_bar(fill = "skyblue") +
+  labs(title = "Distribution by Emp Status", x = "Employment Status", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+data <- ldd %>%
+  mutate(Age_Group = cut(Age, 
+                         breaks = c(18, 25, 35, 45, 55, 65, Inf), 
+                         labels = c("18-25", "26-35", "36-45", "46-55", "56-65", "65+"),
+                         right = FALSE))  # Right = FALSE means 25 is in "18-25"
+
+# Create bar plot for Age Group
+age_plot <- ggplot(data, aes(x = Age_Group, fill = Age_Group)) +
+  geom_bar(fill = "skyblue") +
+  labs(title = "No. of Acct by Age",
+       x = "Age Group",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+# Group Employment Duration into bins
+data <- ldd %>%
+  mutate(Emp_duration = cut(Emp_duration, 
+                            breaks = c(0, 12, 24, 48, 96, 120, Inf), 
+                            labels = c("< 1", "1-2", "2-4", "4-8", "8-10", "10+"),
+                            right = FALSE))  # Right = FALSE means 24 is in "12-24"
+
+# Create bar plot for Employment Duration
+emp_plot <- ggplot(data, aes(x = Emp_duration, fill = Emp_duration)) +
+  geom_bar(fill = "navy") +
+  labs(title = "No. of Acct by Emp Years",
+       x = "Employment Years",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+data <- ldd %>%
+  mutate(No_of_credit_acc = cut(No_of_credit_acc, 
+                         breaks = c(1, 3, 5, 7, Inf), 
+                         labels = c("1", "1-3", "3-5", "7+"),
+                         right = FALSE))  # Right = FALSE means 25 is in "18-25"
+
+# Create bar plot for No. of credit accounts
+credit_plot <- ggplot(data, aes(x = No_of_credit_acc, fill = No_of_credit_acc)) +
+  geom_bar(fill = "navy") +
+  labs(title = "No. of Acct by No of credit acc",
+       x = "No of Credit Acc",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+# Create bar plot for Loan Term
+term_plot <- ggplot(ldd, aes(x = Term, fill = Term)) +
+  geom_bar(fill = "navy") +
+  labs(title = "No. of Acct by Loan Term",
+       x = "Loan Term",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+# Bar plot for Marital Status
+marital_plot <- ggplot(ldd, aes(x = Marital_status)) +
+  geom_bar(fill = "navy", color = "navy") +
+  labs(title = "No. of Acct by Marital Status",
+       x = "Marital Status",
+       y = "Count") +
+  theme_minimal()+
+   theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+grid.arrange(default_plot, gender_plot, emp_status_plot, age_plot, emp_plot, credit_plot, term_plot,  marital_plot, ncol = 4)
+
+```
+
+  🟦 Default: Data shows high number of defaulted accounts.
+  
+  🟦 Gender: We can see concentration in Males compared to females.
+  
+  🟦 Employment status:  ~ 30% of accounts are unemployed.
+  
+  🟦 Age Groups: Distribution of accounts Age group shows concentration in age group 26-35 where majority of accounts, ~ 70% concentration in that age group.
+  
+  🟩 Employment Years: Accounts spred across employments years between < 1 year and up to 10 years with very few have more than 10 years.
+  
+  🟩 Number of Credit Accounts: Majority of accounts have 1 credit account only, ~ 60+%.
+  
+  🟩 Loan Terms: Accounts shows normal distribution by loan terms.
+  
+  🟩 Marital Status: No concentration can be seen by marital status, though more married individuals than singles.
+  
+  
+```{r}
+
+library(gridExtra)
+
+layout(matrix(1:8, nrow = 2), widths = c(1, 1, 1,1))
+
+# Create a frequency table Gender
+Car_loan_plot <- ggplot(ldd, aes(x = Car_loan, fill = Car_loan)) +
+  geom_bar(fill = "skyblue", color = "skyblue") +
+  labs(title = "Distribution by Car_loan", x = "Car_loan", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+# Create a frequency table Gender
+Personal_loan_plot <- ggplot(ldd, aes(x = Personal_loan, fill = Personal_loan)) +
+  geom_bar(fill = "skyblue", color = "skyblue") +
+  labs(title = "Distribution by Personal_loan", x = "Personal_loan", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+# Create a frequency table Gender
+Personal_loan_plot <- ggplot(ldd, aes(x = Personal_loan, fill = Personal_loan)) +
+  geom_bar(fill = "skyblue", color = "skyblue") +
+  labs(title = "Distribution by Personal_loan", x = "Personal_loan", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+
+# Create a frequency table Gender
+Home_loan_plot <- ggplot(ldd, aes(x = Home_loan, fill = Home_loan)) +
+  geom_bar(fill = "skyblue", color = "skyblue") +
+  labs(title = "Distribution by Home_loan", x = "Home_loan", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+# Create a frequency table Gender
+Education_loan_plot <- ggplot(ldd, aes(x = Education_loan, fill = Education_loan)) +
+  geom_bar(fill = "skyblue", color = "skyblue") +
+  labs(title = "Distribution by Education_loan", x = "Education_loan", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust = 0.5), legend.position = "none")
+
+# Group Checking_amount into bins
+data <- ldd %>%
+  mutate(Checking_amount = cut(Checking_amount, 
+                            breaks = c(-10000, 0, 1000, 2000, 3000, Inf), 
+                            labels = c("<0", "0-1K", "1-2K", "2-3K", "4K+"),
+                            right = FALSE))  # Right = FALSE means 24 is in "12-24"
+
+# Create bar plot for Checking_amount Duration
+Checking_amount_plot <- ggplot(data, aes(x = Checking_amount, fill = Checking_amount)) +
+  geom_bar(fill = "navy") +
+  labs(title = "Distributiont by Checking_amount",
+       x = "Checking_amount",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+# Group Credit_score into bins
+data <- ldd %>%
+  mutate(Credit_score = cut(Credit_score, 
+                            breaks = c(0, 660, 720, Inf), 
+                            labels = c("< 660", "660-720", "720+"),
+                            right = FALSE))  # Right = FALSE means 600 is in "600-660"
+
+# Create bar plot for Credit_score Duration
+Credit_scoret_plot <- ggplot(data, aes(x = Credit_score, fill = Credit_score)) +
+  geom_bar(fill = "navy") +
+  labs(title = "Distributiont by Credit_score",
+       x = "Credit_score",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+# Group Saving_amount into bins
+data <- ldd %>%
+  mutate(Saving_amount = cut(Saving_amount, 
+                            breaks = c(0, 2000, 3000, 4000, Inf), 
+                            labels = c("< 2K", "2-3K", "3-4K","4K+"),
+                            right = FALSE))  # Right = FALSE means 600 is in "600-660"
+
+# Create bar plot for Saving_amount Duration
+Saving_amount_plot <- ggplot(data, aes(x = Saving_amount, fill = Saving_amount)) +
+  geom_bar(fill = "navy") +
+  labs(title = "Distributiont by Saving_amount",
+       x = "Saving_amount",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+
+# Group Amount into bins
+data <- ldd %>%
+  mutate(Amount = cut(Amount, 
+                            breaks = c(0, 500, 1000, Inf), 
+                            labels = c("< 0.5K", "0.5-1K", "1K+"),
+                            right = FALSE))  # Right = FALSE means 600 is in "600-660"
+
+# Create bar plot for Amount Duration
+Amount_plot <- ggplot(data, aes(x = Amount, fill = Amount)) +
+  geom_bar(fill = "navy") +
+  labs(title = "Distributiont by Amount",
+       x = "Amount",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 9, face = "bold", hjust = 0.5), legend.position = "none")  # Remove redundant legend
+
+
+grid.arrange( Car_loan_plot, Personal_loan_plot, Home_loan_plot, Education_loan_plot, Checking_amount_plot, Credit_scoret_plot, Saving_amount_plot, Amount_plot, ncol = 4)
+
+```
+
+🟦 Car Loans: over 60% of accounts have car loans
+
+🟧 Personal Loans: ~ 50% of accounts maintains personal loans.
+
+🟩 Home Loans:  More than 90% of accounts have home loans.
+
+🟥 Education Loans: Significant potion of the accounts still have education loans with outstanding balance (~ 80%).
+
+🟦 Checking Accounts Balance: Majority f accounts maintained between $ 0 and 1000 balance in their accounts.
+
+🟧 Credit Score: Almost 80% of accounts have credit score of 720+.
+
+🟩 Saving Amount: Saving accounts balance distributed between $ 2-3K (~ 30%) and $ 3-4K (~ 70%).
+
+🟥 Amount: ~ 20% of accounts have amount between $ 500-1000 and remaining having amount amouns greater than $ 1000 without any accounts with amount greater than $ 2000.
+
+## outliers
+
+Inspecting continuous / numeric arable for potential outliers
+
+```{r}
+# Load required library
+library(plotly)
+
+# Create individual interactive boxplots
+p1 <- plot_ly(ldd, y = ~Checking_amount, type = "box", name = "Checking Amount", boxpoints = "outliers", marker = list(color = "brown2"))
+p2 <- plot_ly(ldd, y = ~Credit_score, type = "box", name = "Credit Score", boxpoints = "outliers", marker = list(color = "purple1"))
+p3 <- plot_ly(ldd, y = ~Saving_amount, type = "box", name = "Saving Amount", boxpoints = "outliers", marker = list(color = "cyan4"))
+p4 <- plot_ly(ldd, y = ~Amount, type = "box", name = "Amount", boxpoints = "outliers", marker = list(color = "brown2"))
+
+
+# Arrange them in a single row using subplot
+subplot(p1, p2, p3, p4, nrows = 1, shareY = FALSE, titleX = TRUE)
+```
+
+🟦 Checking Amount: We can see few outliers with checking account balance below negative 500 and few > 1000 but nothing too far to skew the data
+
+🟧 Credit Score: It is noticeable that we have many accounts with credit score below 600. These could impact / indicate the probability of default.
+
+🟩 Saving Amount: while we can see few outliers, nothing stands out.
+
+🟥 Amount: Similar to saving amount, nothing stands out
+
+# Predicting Prbability of Default using Perceptron Classification
+
+We used the perceptron classification with activation sigmoid since it is equivalent to the classical binary logistic regression mode.
+
+The perceptron classification building process follows the following steps:
+
+  - Feature scaling and data splitting
+  - Hyperparameter tuning
+  - Final model training with the optimal combination of hyperparameter values
+  - Prediction and performance evaluation
+  - Implementation: Determining the optimal threshold based on appropriate performance metrics
+
+
+## Feature scaling and data splitting
+
+Data was split 70/30 after converting all categorical variables into numeric variables. then we scaled the variables except the response variable "Default"
+  
+```{r}
+
+ldd <- read.csv("https://raw.githubusercontent.com/sameralzaim/W02/refs/heads/main/BankLoanDefaultDataset.csv")
+
+# Identify character (categorical) variables across column
+categorical.vars <- sapply(ldd, is.character)   # test for character...
+
+
+# One-hot encode categorical variables: creates a full set of dummy variables 
+# (i.e. less than full rank parameterization)
+dummies <- dummyVars(" ~ . ", data = ldd[, categorical.vars])
+
+## The following predict function produces a data matrix
+categorical.encoded <- predict(dummies, newdata = ldd[, categorical.vars])
+categorical.encoded <- as.data.frame(categorical.encoded)
+
+names(categorical.encoded)[names(categorical.encoded) == "GenderFemale"] <- "GenderFemale"
+# renames variable names to replace "-" with "."
+names(categorical.encoded)[names(categorical.encoded) == "GenderMale"] <- "GenderMale"
+
+
+# Combine with numeric variables (which don't need encoding)
+numeric.vars <- ldd[, !categorical.vars ]
+
+processed.data <- cbind(numeric.vars, categorical.encoded)
+
+
+# Scale numeric variables (excluding the target)
+numeric.cols <- sapply(processed.data, is.numeric) & names(processed.data) != "Default"
+## by default, scale() takes 'z-score' transformation
+processed.data[, numeric.cols] <- scale(processed.data[, numeric.cols])
+
+
+# Check for missing values: since neuralnet() does not handle missing values
+#sum(is.na(processed.data))
+
+
+# Split data into training and testing sets
+set.seed(123)
+
+# sample size
+nn <- length(processed.data$Default)
+train.index.cls <- sample(1:nn, round(0.7*nn))   # random obs ID
+train.data.cls <- processed.data[train.index.cls, ]
+test.data.cls <- processed.data[-train.index.cls, ]
+
+##
+train.data.orig <- ldd[train.index.cls, ]
+test.data.orig <- ldd[-train.index.cls, ]
+
+#table(train.data.cls$Default)
+#table(test.data.cls$Default)
+
+```
+
+```{r}
+#str (processed.data)
+#table(train.data.cls$Default)
+#table(test.data.cls$Default)
+```
+
+## Hyperparameter Tuning
+
+Have used learning rate of (0.001, 0.01, 0.05, 0.1, 0.2) with stopping threshold of (0.1,0.05) after attempting multiple differnt learning rates and stopping thresholds in order to improve the model accuracy.
+
+During the tuning process, performed 5-fold cross-validation to obtain a stable accuracy score, using a default threshold of 0.5 (for the sigmoid perceptron)
+
+```{r}
+
+## Grid Search Setup
+# Define the hyperparameter grid
+hyper.grid.cls <- expand.grid(
+  learningrate = c(0.001, 0.01, 0.05, 0.1, 0.2),
+  threshold = c(0.01, 0.05)  # Stopping threshold for partial derivatives
+ )
+
+# Create formula for neural network
+formula <- as.formula(paste("Default ~", paste(names(train.data.cls)[!names(train.data.cls) %in% "Default"], collapse = " + ")))
+
+# Set up 5-fold cross-validation: createFolds() returns a list of fold obs IDs
+# returnTrain = FALSE => no print out
+#folds <- createFolds(train.data.cls$y, k = 5, list = TRUE, returnTrain = FALSE)
+
+##
+
+k <- 5
+fold.size <- floor(dim(train.data.cls)[1]/k)
+# Initialize results storage
+results <- data.frame(
+  learningrate = numeric(),
+  threshold = numeric(),
+  accuracy = numeric(),
+  stringsAsFactors = FALSE
+)
+
+## Perform Grid Search with Cross-Validation
+for(i in 1:nrow(hyper.grid.cls)) {
+  lr <- hyper.grid.cls$learningrate[i]
+  th <- hyper.grid.cls$threshold[i]
+  
+  fold.accuracies <- numeric(k)
+
+
+## Perform Grid Search with Cross-Validation
+for(fold in 1:k) {
+    # Split into training and validation sets
+    valid.indices <- (1 + (fold-1)*fold.size):(fold*fold.size)
+    train.fold <- train.data.cls[-valid.indices, ]
+    valid.fold <- train.data.cls[valid.indices, ]
+}
+
+    # Train the perceptron
+    set.seed(123)
+   model.sigmoid <- neuralnet(
+  formula,
+  data = train.fold,
+  hidden = 0,  # Start with 1 hidden unit
+  linear.output = FALSE,
+  learningrate = lr,
+  act.fct = "logistic",
+  algorithm = "rprop+",  # Resilient Backpropagation
+  threshold = th,
+  stepmax = 1e5
+)
+
+# Make predictions
+preds <- predict(model.sigmoid, valid.fold)
+
+#roc.sigmoid <- roc(valid.fold$Default, preds)
+#best.threshold <- coords(roc.sigmoid, "best", ret = "threshold")
+
+#preds <- as.vector(preds)
+
+#pred.class <- ifelse(preds > best.threshold, 1, 0)
+pred.classes <- ifelse(preds > 0.4, 1, 0)  # default threshold 0.5
+
+#print (preds)
+#print (pred.classes)
+
+# Accuracy
+fold.accuracies[fold] <- mean(pred.classes == valid.fold$Default)
+
+#print (pred.classes)
+#print (fold_accuracy)
+
+
+  # Store average accuracy for this hyperparameter combination
+  results <- rbind(results, data.frame(
+    learningrate = lr,
+    threshold = th,
+    accuracy = mean(fold.accuracies)
+    
+  ))
+}
+#print (results)
+
+## Analyze Results
+# Find the best combination
+best.combination <- results[which.max(results$accuracy), ]
+
+#cat("\nBest hyperparameter combination:\n")
+pander(best.combination)
+
+```
+
+```{r}
+#str (preds)
+#str(pred.classes)
+#table (pred.classes)
+#table (valid.fold$Default)
+#str(valid.fold$Default)
+#table (fold.accuracies)
+# Convert preds to a numeric vector (if needed)
+#preds <- as.vector(preds)
+
+```
+
+```{r}
+#table(train.data.cls$Default)
+#prop.table(table(train.data.cls$Default))
+#summary(preds)
+hist(preds, main="Neural Network Prediction Distribution", col="skyblue")
+```
+
+The above identified ‘optimal’ combination of hyperparameters, showed that model accuracy is low. this driven mainly by imbalance in the response variable (30% default). We will continue with training the final perceptron model to see the model separation power.
+
+## Training Final Model
+
+Have used neuralnet() to train the final perceptron model with the tuned hyperparameters and the following assumptions:
+
+  - Model formula: The formula must include scaled numerical feature variables.
+  - hidden = 0: This ensures the model is a perceptron (no hidden layers).
+  - linear.output = FALSE: Required for classification tasks.
+  - The activation function used was logistic .
+  - algorithm =: (rprop) used but used resilient rprop+ for training the final model
+
+```{r}
+## Train Final Model with Best Hyperparameters
+final.sigmoid.model <- neuralnet(
+  formula,
+  data = train.data.cls,
+  hidden = 0,
+  linear.output = FALSE,
+  learningrate = best.combination$learningrate,
+  threshold = best.combination$threshold,
+  act.fct = "logistic",
+  algorithm = "rprop+", # The resilient backpropagation with weight backtracking
+  stepmax = 1e5
+)
+# Plot the final model
+ plot(final.sigmoid.model)
+
+```
+
+```{r, echo=FALSE, out.width="70%"}
+knitr::include_graphics("C:/Users/fares/OneDrive/Desktop/STA552/Project 4/Picture1.jpg")
+```
+
+The model used 18 scaled numerical variables with different power. 
+
+```{r}
+#str(test.data.cls) 
+```
+
+## ROC Analysis and Comparison
+
+```{r}
+
+##
+## Evaluate on Test Set
+pred.sigmoid <- predict(final.sigmoid.model, test.data.cls)
+
+###  logistic regression
+logit.fit <- glm(Default ~ ., data = train.data.cls, family = binomial)
+AIC.logit <- step(logit.fit, direction = "both", trace = 0)
+pred.logit <- predict(AIC.logit, test.data.cls, type = "response")
+pred.full <- predict(logit.fit, test.data.cls, type = "response")
+
+## roc
+
+roc.full.logit <- roc(test.data.cls$Default, pred.full)
+roc.AIC.logit <- roc(test.data.cls$Default, pred.logit)
+roc.sigmoid <- roc(test.data.cls$Default, pred.sigmoid )
+
+## AUC
+auc.sigmoid <- roc.sigmoid$auc
+auc.full.logit <- roc.full.logit$auc
+auc.AIC.logit <- roc.AIC.logit$auc
+
+## spe-sen
+sigmoid.spe <- roc.sigmoid$specificities
+sigmoid.sen <- roc.sigmoid$sensitivities
+
+full.logit.spe <- roc.full.logit$specificities
+full.logit.sen <- roc.full.logit$sensitivities
+
+AIC.logit.spe <- roc.AIC.logit$specificities
+AIC.logit.sen <- roc.AIC.logit$sensitivities
+
+# ROC curve
+plot(1-sigmoid.spe, sigmoid.sen, col = "navy", type = "l", lty = 1,
+     xlab = "1 - specificity",
+     ylab = "sensitivity",
+     main = "ROC Curves of Perceptron and Logistic Models")
+lines(1-full.logit.spe, full.logit.sen, lty = 1, col = "cyan4")
+lines(1-AIC.logit.spe, AIC.logit.sen, lty = 1, col = "cyan")
+abline(0,1, lty =2, col = "red")
+text(0.98, 0.3, paste("Perceptron AUC = ", round(auc.sigmoid,4)), col = "navy", cex = 0.8, pos = 2)
+text(0.98, 0.25, paste("Full Logit AUC = ", round(auc.full.logit,4)), col = "cyan4", cex = 0.8, pos = 2)
+text(0.98, 0.2, paste("AIC AUC = ", round(auc.AIC.logit,4)), col = "cyan", cex = 0.8, pos = 2)
+
+```
+
+The ROC curves above show that the three candidate models perform similarly. All 3 models showing AUC higher than 0.98 though the accuracy < 0.2.
+
+## Perceptron Clasification Concluding Remarks
+
+Perceptron classification with an identity activation function, the model is equivalent or slightly inferior to linear regression
+
+Considering the performance of the above model, where we are seeing mismatch between accuracy and AUC, we will try predicting the default utilizing multilayer Neural Network to see if we can get better / more consistent prediction
+
+# Mulilayer Neural Network
+
+## Scalling the data
+
+using different scaling / normalization to compare both results.
+
+
+```{r}
+
+# Load necessary libraries
+# library(neuralnet)
+# library(pROC)     # For ROC analysis
+# library(ggplot2)  # For visualization
+
+## No missing values in the dataset.
+
+# Feature scaling - normalize numeric variables to [0,1] range
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# Apply normalization to all numeric columns
+numeric.cols <- sapply(processed.data, is.numeric)
+processed.data[numeric.cols] <- lapply(processed.data[numeric.cols], normalize)
+
+# Two-way data splitting: 70-30%
+set.seed(123)  # For reproducibility
+sample.size.cls <- floor(0.70 * nrow(processed.data))
+train.indices.cls <- sample(1:sample.size.cls, size = sample.size.cls, replace = FALSE)
+
+train.data.cls <- processed.data[train.indices.cls, ]
+test.data.cls <- processed.data[-train.indices.cls, ]
+
+```
+
+To simplify hyperparameter tuning and final model training with the pre-selected MLP architecture for classification, we define a custom function to determine the optimal number of nodes for both single-hidden-layer and double-hidden-layer MLPs
+
+```{r}
+
+# Function to perform grid search for neuralnet
+neuralnet.grid.search <- function(train.data, test.data, hidden.layers = 1) {
+  # Define the grid of hyperparameters
+  if (hidden.layers == 1) {
+    hidden.nodes <- c(2, 4, 6, 8, 10)
+    grid <- expand.grid(hidden = hidden.nodes)
+  } else {
+    hidden.nodes <- c(2, 4, 6)
+    grid <- expand.grid(hidden1 = hidden.nodes, hidden2 = hidden.nodes)
+  }
+  
+  # Add columns to store results
+  grid$accuracy <- NA
+  grid$auc <- NA
+  
+  # Formula for neural network
+  nn.formula <- as.formula(paste("Default ~", 
+                                paste(names(train.data)[!names(train.data) %in% "Default"], 
+                                      collapse = " + ")))
+  
+  # Perform grid search
+  for (i in 1:nrow(grid)) {
+    if (hidden.layers == 1) {
+      hidden <- c(grid$hidden[i])
+    } else {
+      hidden <- c(grid$hidden1[i], grid$hidden2[i])
+    }
+    
+    # Train the model
+    nn.model <- neuralnet(
+      formula = nn.formula,
+      data = train.data,
+      hidden = hidden,
+      linear.output = FALSE,  # For classification
+      act.fct = "logistic",   # Sigmoid activation
+      stepmax = 1e6           # Increase max steps for convergence
+    )
+    
+    # Make predictions
+    predictions <- predict(nn.model, test.data)
+    predicted.classes <- ifelse(predictions > 0.5, 1, 0)
+    
+    # Calculate accuracy
+    accuracy <- mean(predicted.classes == test.data$Default)
+    
+    # Calculate AUC
+    roc.obj <- roc(test.data$Default, predictions)
+    auc.value <- auc(roc.obj)
+    
+    # Store results
+    grid$accuracy[i] <- accuracy
+    grid$auc[i] <- auc.value
+  }
+  return(grid)
+}
+```
+
+## Accuracy and AUC with One Hidden Layer
+
+we perform one-layer and check the AUD and accuracy values for each number of nods.
+
+```{r}
+# Perform grid search for single hidden layer
+grid.results.1layer <- neuralnet.grid.search(train.data=train.data.cls, 
+                                             test.data=test.data.cls, 
+                                             hidden.layers = 1)
+pander(grid.results.1layer)
+
+```
+
+The optimal number of nodes in the hidden layer is the corresponds to the smallest AUC. Similarly, the performance table of two-hidden-layer MLP is given below.
+
+## Accuracy and AUC with Two Hiden Layer
+
+We replicate the above step but with 2 hidden layers
+
+```{r}
+
+# Perform grid search for two hidden layers
+grid.results.2layer <- neuralnet.grid.search(train.data=train.data.cls, 
+                                             test.data=test.data.cls, 
+                                             hidden.layers = 2)
+pander(grid.results.2layer)
+
+```
+
+## One-hidden-layer MLP
+
+We use the optimal number of nodes to fit the one-hidden-layer MLP to the data
+
+
+```{r}
+
+# Formula for neural network
+nn.formula <- as.formula(paste("Default ~", 
+                              paste(names(train.data.cls)[!names(train.data.cls) %in% "Default"], 
+                                    collapse = " + ")))
+
+# Train single hidden layer model (using best configuration from grid search)
+best.1layer <- grid.results.1layer[which.max(grid.results.1layer$auc), ]
+
+nn.1layer <- neuralnet(
+  formula = nn.formula,
+  data = train.data.cls,
+  hidden = best.1layer$hidden,
+  linear.output = FALSE,
+  act.fct = "logistic",
+  stepmax = 1e6
+)
+##
+
+  plot(nn.1layer, main = paste("One-hidden-layer with", best.1layer$hidden, "Nodes"))
+
+```
+
+```{r, echo=FALSE, out.width="70%"}
+knitr::include_graphics("C:/Users/fares/OneDrive/Desktop/STA552/Project 4/Picture2.png")
+```
+
+## Two-hidden-layer MLP
+
+We use the optimal number of nodes to fit the Two-Hidden-layer MLP to the data 
+
+``` {R}
+
+# Train two hidden layers model (using best configuration from grid search)
+best.2layer <- grid.results.2layer[which.max(grid.results.2layer$auc), ]
+
+nn.2layer <- neuralnet(
+  formula = nn.formula,
+  data = train.data.cls,
+  hidden = c(best.2layer$hidden1, best.2layer$hidden2),
+  linear.output = FALSE,
+  act.fct = "logistic",
+  stepmax = 1e6
+)
+##
+plot(nn.2layer)
+
+```
+
+
+```{r, echo=FALSE, out.width="70%"}
+knitr::include_graphics("C:/Users/fares/OneDrive/Desktop/STA552/Project 4/Picture3.png")
+```
+
+In the two model plots above, the Error and Steps values displayed at the bottom represent:
+
+Steps: The number of training iterations (epochs) completed during model optimization. Each step corresponds to one complete forward/backward pass and weight update cycle.
+
+Errors: The training error reflects the loss function value (typically SSE for regression or cross-entropy for classification). The displayed Error represents the final error value achieved when the optimization process converges.
+
+Next, we write a custom function to extract the performance metrics to assess the global performance through ROC curves and the corresponding areas under the ROC curves.
+
+
+```{r}
+
+# Function to evaluate model performance
+evaluate.model <- function(model, test.data) {
+  # Make predictions
+  predictions <- predict(model, test.data)
+  predicted.classes <- ifelse(predictions > 0.5, 1, 0)
+  
+  # Calculate metrics
+  accuracy <- mean(predicted.classes == test.data$Default)
+  confusion.matrix <- table(Predicted = predicted.classes, Actual = test.data$Default)
+  roc.obj <- roc(test.data$Default, predictions)
+  auc.value <- auc(roc.obj)
+  
+  return(list(
+    accuracy = accuracy,
+    confusion.matrix = confusion.matrix,
+    roc.obj = roc.obj,
+    auc = auc.value
+  ))
+}
+
+# Evaluate single hidden layer model
+perf.1layer <- evaluate.model(nn.1layer, test.data.cls)
+#print(perf.1layer[c("accuracy", "confusion_matrix", "auc")])
+
+# Evaluate two hidden layers model
+perf.2layer <- evaluate.model(nn.2layer, test.data.cls)
+#print(perf.2layer[c("accuracy", "confusion_matrix", "auc")])
+
+```
+
+We use classic logistic regression as the base model and compare it with the two MLPs using ROC curves and their corresponding AUC values in the following figure.
+
+```{r}
+
+# Train logistic regression model (base model)
+logit.model <- glm(Default ~ ., data = train.data.cls, family = binomial)
+
+# Evaluate logistic regression model
+logit.pred <- predict(logit.model, test.data.cls, type = "response")
+logit.classes <- ifelse(logit.pred > 0.5, 1, 0)
+logit.accuracy <- mean(logit.classes == test.data.cls$Default)
+logit.roc <- roc(test.data.cls$Default, logit.pred)
+logit.auc <- auc(logit.roc)
+
+##
+roc.1layer <- perf.1layer$roc.obj
+roc.2layer <- perf.2layer$roc.obj
+roc.logit <- logit.roc
+
+## specificity and sensitivity
+sen.1layer <- roc.1layer$sensitivities
+spe.1layer <- roc.1layer$specificities
+sen.2layer <- roc.2layer$sensitivities
+spe.2layer <- roc.2layer$specificities
+sen.logit <- roc.logit$sensitivities
+spe.logit <- roc.logit$specificities
+
+## AUC
+auc.1layer <- roc.1layer$auc
+auc.2layer <- roc.2layer$auc
+auc.logit <- roc.logit$auc
+
+## Plot ROC curves for comparison
+par(pty = "s")   # make a square plot to avaoid distortion
+plot(1-spe.1layer, sen.1layer, type = "l", lty = 1,
+     col = "blue", 
+     xlab = "1 - specificity",
+     ylab = "sensitvity",
+     main = "ROC Curve Comparison")
+
+lines(1-spe.2layer, sen.2layer, lty = 1, col = "darkred")
+lines(1-spe.logit, sen.logit, lty = 1, col = "darkgreen")
+legend("bottomright", 
+       legend = c(paste("1-layer MLP (AUC =", round(perf.1layer$auc, 3), ")"),
+                  paste("2-layer MLP (AUC =", round(perf.2layer$auc, 3), ")"),
+                  paste("Logistic Reg (AUC =", round(logit.auc, 3), ")")),
+                col = c("blue", "darkred", "darkgreen"), 
+                lty = 1, cex = 0.7, bty = "n")
+
+```
+
+# Conclusion 
+
+When comparing the different methodologies we can see that the multilayers approach give us the highest accuracy with relation to AUC. additionally comparing One-Hidden_Layer with Two-Hidden-Layers, shows the followings:
+
+
+  + **One-Hidden-Layer**
+  
+| **Hidden**  | **Accuracy** |  **AUC** |
+|:------------|:-------------|:---------|
+| 2 | 0.9067 | 0.9671 |
+    
+  + **Two-Hidden-Layer**
+
+   
+| Hidden1  |  Hidden2 |  Accuracy  |  AUC  |
+|:---------|:---------|:-----------|:------|
+|    2     |     6    |     0.92   | 0.9586 |
+   
+
+Comparing the above, we would *</font>  *  <b><font color = "blue">\color{blue} recommend using multilayers with One Hidden Layer.
